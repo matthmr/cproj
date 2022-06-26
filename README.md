@@ -1,5 +1,5 @@
 # C Project template
-Little template files that might be useful in a C project.
+Template files that might be useful in a C project.
 
 ## configure
 
@@ -24,3 +24,30 @@ as it does not autogenerate.
 ## make-script.sh
 
 `configure`'s target template. Change the `--help` message and script body.
+
+## targets.m4
+
+Makefile target m4 template for binaries and libraries.
+It uses `CC`, `CFLAGS` and `AR`, `ARFLAGS` as `make` variables.
+
+It sets up an `include` interface with:
+
+```m4
+target(`target_name')dnl
+target_bin(`target_binaries...')dnl
+target_obj(`target_objects...')dnl
+target_lib(`tagets_libaries...')dnl
+target_gen
+```
+
+as target and
+
+```m4
+library(`library_name')dnl
+library_obj(`libary_objects...`)dnl
+library_gen
+```
+
+as library. All values the have `...` are comma separated.
+It is also assumed that binaries are stored with `bin` prefix
+and libraries are stored with `lib` prefix.
