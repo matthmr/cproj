@@ -1,0 +1,20 @@
+default: install
+
+MAKEFILES:= #make/File.mk
+VERSION:= #"M4FLAG_src_version"
+
+#include make/File.mk
+
+clean:
+	@echo "[ .. ] Cleaning working directory"
+	@find -type f -name '*.[oa]' | xargs rm -rvf
+clean-make:
+	@echo "[ .. ] Cleaning make files"
+	@rm -rfv ${MAKEFILES}
+clean-docs:
+	@echo "[ .. ] Cleaning documentation"
+
+install: #dep
+man: #man/man1/man.1
+
+.PHONY: install man default clean clean-docs clean-make

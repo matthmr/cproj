@@ -73,4 +73,17 @@ m4 -DM4ARG_file=main.c.in inline.m4 > main.c
 - `setfor(f,X)` : sets all intances of `x1` to `x2` in the pair `X` for file `f`.
 - `unsetfor(f,X)` : unsets all intances of `x` in the list `X` for file `f`.
 
-For directories with C sources, documentation will be available inside their directories.
+### Makefile.in
+
+`configure`'s target Makefile.
+
+## src/include
+
+### cli.h
+
+ANSI escape sequence function-like macro definitions. The name of the macros are self-explanatory,
+so no documentation will be written.
+
+---
+
+For directories with C sources under `src/`, documentation will be available inside their directories.
