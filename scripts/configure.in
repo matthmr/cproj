@@ -82,6 +82,8 @@ function check_bounds {
 		faux_args=3
 	fi
 
+	[[ $faux_args = 1 ]] && return 0
+
 	local opt_arg=
 	local opt_cmd=
 
@@ -125,7 +127,10 @@ function check_bounds {
 		opt_cmd=${opt#*=}
 
 		# empty value means wrong syntax
-		[[ -z $opt_cmd || $opt_cmd = $opt_arg ]] && return 1
+		if [[ -z $opt_cmd || $opt_cmd = $opt_arg && $opt_cmd =~ ^--.*$ ]]
+		then
+			return 1
+		fi
 
 		if [[ $opt_arg = '--start' ]]
 		then
@@ -265,7 +270,7 @@ function parse_flags {
 
 			# the flag was found
 			local arg=
-			[[ ${bool} = '+' ]] && arg=yes || arg=no
+			[[ ${bool} = '+' ]] && arg=1 || arg=0
 			M4FLAGS+="-D${INCLUDE_FLAG_PREFIX}${flag_arg}=${arg} " # ... add it to the m4 flags
 
 		else
@@ -308,6 +313,3 @@ can_flags=${@:$faux_args}
 call
 
 echo "[ OK ] Done! This source tree is ready to compile!"
-# echo "----------------------------------------------------------"
-# echo "Run \`make help' to get a list of targets to run make with"
-# echo "----------------------------------------------------------"
