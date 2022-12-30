@@ -127,6 +127,10 @@ m4 -DM4ARG_file=main.c.in inline.m4 > main.c
 ANSI escape sequence function-like macro definitions. The name of the macros are self-explanatory,
 so no documentation will be written.
 
+### pool.h
+
+Simple memory pool templates.
+
 ---
 
 For directories with C sources under `src/`, documentation will be available inside their directories.
