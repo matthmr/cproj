@@ -129,7 +129,44 @@ so no documentation will be written.
 
 ### pool.h
 
-Simple memory pool templates.
+Simple memory pool templates, header-library.
+
+Define two macros:
+
+1. `POOL_ENTRY_T`: the type of the array on each pool
+2. `POOL_AM`: the length or the array on each pool
+
+e.g:
+
+``` c
+#define POOL_ENTRY_T int
+#define POOL_AM      23
+
+#include "pool.h"
+```
+
+The library exposes two functions:
+
+1. `pool_add_node`: get a new node in the pool
+2. `pool_from_idx`: get the pool from the an index
+
+four variables:
+
+1. `POOL`: the global memory pool
+2. `POOLP`: the global memory pool pointer
+
+and two types:
+
+1. `POOL_T`: the default pool type (only one per translation unit)
+2. `POOL_RET_T`: the default pool return type for functions (only one per
+                   translation unit)
+
+those exposees are enough to expand the library on your project.
+
+#### NOTE!
+
+This library *will* conflict if it has multiple implementations per translation
+unit. Make sure to separate them correctly.
 
 ---
 
