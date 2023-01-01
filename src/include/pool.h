@@ -6,6 +6,10 @@
 //#  include "utils.h"
 typedef unsigned int uint;
 
+#  ifndef NULL
+#    define NULL ((void*)0)
+#  endif
+
 #  define POOL_T     struct __mempool
 #  define POOL_RET_T struct __mempool_ret
 
@@ -72,7 +76,7 @@ static POOL_T gmp = {
 #  define POOL gmp
 
 // the thread pointer
-static POOL_T* gmpp = &gmp
+static POOL_T* gmpp = &gmp;
 #  define POOLP gmpp
 
 /**
