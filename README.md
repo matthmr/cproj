@@ -28,5 +28,5 @@ For documentation for a specific section, go to that section and read the
 
 # License
 
-This repository is licensed under the [MIT
-License](https://opensource.org/licenses/MIT).
+This repository is licensed under the [GNU GPLv3
+License](https://opensource.org/license/gpl-3-0/).
