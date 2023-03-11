@@ -3,24 +3,19 @@
 
 #  include <stdlib.h>
 
-//#  include "utils.h"
-typedef unsigned int uint;
-
-#  ifndef NULL
-#    define NULL ((void*)0)
-#  endif
+#  include <include/utils.h>
+#  include <include/err.h>
 
 #  define POOL_T     struct __mempool
 #  define POOL_RET_T struct __mempool_ret
 
 #  define MEMPOOL(t,am)     \
    POOL_T {                 \
-    t mem[am];              \
     struct __mempool* next; \
     struct __mempool* prev; \
-    uint idx;               \
-    uint total;             \
-    uint used;              \
+    uint c_idx;             \
+    uint p_idx;             \
+    t mem[am];              \
   }
 
 /**
@@ -30,27 +25,26 @@ typedef unsigned int uint;
    @mem:   memory pool
    @next:  next section
    @prev:  previous section
-   @idx:   index of the current section within the pool chain
-   @total: total number of entries
-   @used:  total number of entries used
+   @c_idx: index of the current section within the pool chain
+   @p_idx: index of the current element within the pool thread
  */
 
 #  define MEMPOOL_RET(t)    \
   POOL_RET_T {              \
-    struct __mempool* mem;  \
+    struct __mempool* new;  \
     struct __mempool* base; \
-    t*        entry;        \
-    bool      same;         \
+    t*   entry;             \
+    int  stat;              \
   }
 
 /**
    MEMPOOL_RET(t)
    --------------
 
-   @mem:   current memory pool        (what we attach, child)
+   @new:   current memory pool        (what we attach, child)
    @base:  base memory pool           (what we attach to, root)
    @entry: current memory pool entry
-   @same:  inclusion boolean
+   @stat:  exit status
  */
 
 #  ifndef POOL_ENTRY_T
@@ -63,70 +57,84 @@ typedef unsigned int uint;
 
 MEMPOOL(POOL_ENTRY_T, POOL_AM);
 MEMPOOL_RET(POOL_ENTRY_T);
+#endif
+
+#ifndef LOCK_POOL_THREAD
+#  define LOCK_POOL_THREAD
 
 // the first thread entry
-static POOL_T gmp = {
+static POOL_T __mempool_t = {
   .mem   = {0},
   .next  = NULL,
   .prev  = NULL,
-  .idx   = 0,
-  .total = POOL_AM,
-  .used  = 1,
+  .c_idx = 0,
+  .p_idx = 0,
 };
-#  define POOL gmp
+#  define POOL __mempool_t
 
-// the thread pointer
-static POOL_T* gmpp = &gmp;
-#  define POOLP gmpp
+static POOL_T* __mempool_p = &__mempool_t;
+#  define POOL_P __mempool_p
+
+#endif
+
+#ifndef LOCK_POOL_DEF
+#  define LOCK_POOL_DEF
 
 /**
    Adds a node to a memory pool, returning a structure with the memory for the
    node and information about if the node is on another pool thread
 
-   @mpp: the current pool thread
+   @pp: the current pool thread
  */
-static POOL_RET_T pool_add_node(POOL_T* mpp) {
-  POOL_RET_T ret = {
-    .mem   = NULL,
-    .base  = mpp,
+static POOL_RET_T pool_add_node(POOL_T* pp) {
+  register int ret = 0;
+
+  POOL_RET_T ret_t = {
+    .new   = NULL,
+    .base  = pp,
     .entry = NULL,
-    .same  = true,
+    .stat  = ret,
   };
 
-  if (mpp->used == mpp->total) {
-    if (!mpp->next) {
-      // TODO: even though this has no way to get leaked,
-      //       free it when exiting `main'
-      mpp->next        = malloc(sizeof(POOL_T));
+  if (pp->p_idx == POOL_AM) {
+    if (!pp->next) {
+      pp->next = malloc(sizeof(POOL_T));
 
-      mpp->next->idx   = (mpp->idx + 1);
-      mpp->next->prev  = mpp;
-      mpp->next->next  = NULL;
+      // OOM (somehow)
+      if (pp->next == NULL) {
+        ret = 1; // should be something like `EOOM` in your project
+        goto done;
+      }
+
+      pp->next->prev  = pp;
+      pp->next->next  = NULL;
+      pp->next->c_idx = pp->c_idx + 1;
     }
 
-    ret.same          = false;
-    mpp->next->total  = mpp->total;
-    mpp->next->used   = 0;
-    mpp               = mpp->next;
+    pp->next->p_idx = 0;
+    pp              = pp->next;
   }
 
-  ret.mem   = mpp;
-  ret.entry = (mpp->mem + mpp->used);
-  ++mpp->used;
+  ret_t.new   = pp;
+  ret_t.entry = (pp->mem + pp->p_idx);
+  ++pp->p_idx;
 
-  return ret;
+done:
+  ret_t.stat = ret;
+  return ret_t;
 }
 
 /**
-   Gets a memory pool thread from a given index
+   Gets a memory pool thread from a given index. The difference is computed
+   relatively, so we don't *always* have O(n) time search
 
-   @mpp: the current pool thread
-   @idx: the given index
+   @pp:    the current pool thread
+   @c_idx: the given index
  */
-static POOL_RET_T pool_from_idx(POOL_T* mpp, uint idx) {
+static POOL_RET_T pool_from_idx(POOL_T* pp, uint c_idx) {
   POOL_RET_T ret = {0};
-  POOL_T* pp     = mpp;
-  int diff = (idx - mpp->idx);
+  int diff       = (c_idx - pp->c_idx);
+  ret.base       = pp;
 
   if (diff > 0) {
     for (; diff; --diff) {
@@ -139,10 +147,8 @@ static POOL_RET_T pool_from_idx(POOL_T* mpp, uint idx) {
     }
   }
 
-  ret.entry  =
-    (ret.mem = pp)->mem;
-  ret.base   = mpp;
-  ret.same   = (bool) (pp == mpp);
+  ret.new   = pp;
+  ret.entry = pp->mem;
 
   return ret;
 }
